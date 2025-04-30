@@ -1,0 +1,55 @@
+/* ProseMirror의 기본 스타일 제거 */
+.ProseMirror {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  caret-color: black; /* 커서 색상 */
+}
+
+/* 에디터 스타일 */
+.ProseMirror {
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+
+  border: none;
+  border-radius: 8px;
+}
+
+/* 제목 스타일 */
+.ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* 문단 스타일 */
+.ProseMirror p {
+  margin-bottom: 10px;
+  border: none;
+}
+
+/* 플레이스홀더 스타일 */
+.ProseMirror .is-focused::before {
+  content: attr(placeholder);
+  color: #bbb;
+}
+
+/* Textarea 스타일 수정 */
+.textarea-editor {
+  border: none; /* 보더 제거 */
+  outline: none; /* 포커스 시 보더 없애기 */
+  resize: none; /* 크기 조절 안 되게 */
+  padding: 1rem; /* 여백 추가 */
+  width: 100%;
+  min-height: 300px; /* 최소 높이 설정 */
+  box-sizing: border-box; /* 여백, 패딩 포함 */
+  font-size: 1.125rem;
+  font-family: inherit; /* 폰트 상속 */
+}
+
+.textarea-editor:focus {
+  border: none; /* 포커스 상태에서도 보더 없애기 */
+  outline: none; /* 포커스 시 보더 없애기 */
+}

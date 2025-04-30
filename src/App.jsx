@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import Write from "./pages/Write.jsx";
 import PostDetail from "./pages/PostDetail.jsx";
@@ -10,9 +10,12 @@ import Register from "./pages/Register.jsx";
 import Header from "./components/Header.jsx";
 
 function App() {
+  const location = useLocation();
+  const isWritePage = location.pathname === "/write"; // 👈 현재 경로 체크
+
   return (
     <>
-      <Header />
+      {!isWritePage && <Header />} {/* 👈 /write가 아닐 때만 Header 보이게 */}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/write" element={<Write />} />

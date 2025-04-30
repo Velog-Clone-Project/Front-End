@@ -1,121 +1,187 @@
-import React from "react";
-import KakaoIcon from "../assets/velog-kakao-long.png";
-import "../styles/GoogleButton.css";
+import { useState } from "react";
+import axios from "../libs/api/axios"; // 커스텀 axios 인스턴스
 
-export default function AuthModal({ mode = "login", onClose, setMode }) {
-  const isSignup = mode === "signup";
+export default function AuthModal({ onClose, setIsLoggedIn }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    userId: "", // 🔥 userId 추가
+  });
+  const [message, setMessage] = useState("");
 
-  const handleKakaoLogin = () => {
-    console.log(`${isSignup ? "카카오 회원가입" : "카카오 로그인"} 클릭`);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGoogleLogin = () => {
-    console.log(`${isSignup ? "구글 회원가입" : "구글 로그인"} 클릭`);
+  const handleLogin = async () => {
+    setMessage("");
+    try {
+      const res = await axios.post(
+        "/auth/login",
+        {
+          email: form.email,
+          password: form.password,
+        },
+        {
+          // headers: {
+          //   "x-mock-response-code": "404", // 🔥 로그인 테스트용 응답 강제
+          // },
+        }
+      );
+
+      console.log("로그인 응답:", res.data);
+      const { accessToken } = res.data.data;
+      localStorage.setItem("accessToken", accessToken);
+      setIsLoggedIn(true); // 로그인 성공 시 상태 변경
+      setMessage("로그인 성공!");
+      onClose();
+    } catch (err) {
+      const status = err.response?.status;
+      const msg = err.response?.data?.message;
+
+      console.log("로그인 실패:", status, msg);
+
+      if (status === 400) {
+        setMessage("이메일 또는 비밀번호를 입력해주세요.");
+      } else if (status === 401) {
+        setMessage("비밀번호가 일치하지 않습니다.");
+      } else if (status === 404) {
+        setMessage("존재하지 않는 사용자입니다.");
+      } else {
+        setMessage(msg || "로그인 실패");
+      }
+    }
+  };
+
+  const handleSignup = async () => {
+    setMessage("");
+    try {
+      const res = await axios.post(
+        "/auth/signup",
+        {
+          email: form.email,
+          password: form.password,
+          userId: form.userId, // 🔥 userId 같이 보냄
+        },
+        {
+          // headers: {
+          //   "x-mock-response-code": "500", // 테스트용 응답 강제
+          // },
+        }
+      );
+
+      console.log("회원가입 응답:", res.data);
+      setMessage("회원가입 성공! 로그인 화면으로 이동합니다.");
+      setTimeout(() => setIsLogin(true), 1500);
+    } catch (err) {
+      const status = err.response?.status;
+      const error = err.response?.data?.error;
+      const msg = err.response?.data?.message;
+
+      console.log("회원가입 실패:", status, error, msg);
+
+      if (status === 400) {
+        setMessage("이메일 또는 비밀번호를 입력해주세요.");
+      } else if (status === 409 && error === "DUPLICATE_EMAIL") {
+        setMessage("이미 등록된 이메일입니다.");
+      } else if (status === 409 && error === "DUPLICATE_USER_ID") {
+        setMessage("이미 사용 중인 유저 ID입니다.");
+      } else if (status === 500) {
+        setMessage("서버 오류로 회원가입에 실패했습니다.");
+      } else {
+        setMessage(msg || "회원가입 실패");
+      }
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    isLogin ? handleLogin() : handleSignup();
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
-      <div className="bg-white w-full max-w-2xl rounded-md flex shadow-lg overflow-hidden">
-        <div className="hidden md:flex flex-col items-center justify-center w-1/2 bg-[#f8f9fa] px-8">
-          <p className="text-xl font-semibold text-center">환영합니다!</p>
-        </div>
+    <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+      <div className="bg-white w-full max-w-md rounded-lg p-8 shadow-lg relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+        >
+          &times;
+        </button>
 
-        <div className="flex flex-col justify-center w-full md:w-1/2 px-10 py-12 relative gap-y-6">
+        <h2 className="text-xl font-bold text-center mb-6">
+          {isLogin ? "로그인" : "회원가입"}
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && ( // 🔥 회원가입일 때만 userId 입력
+            <input
+              type="text"
+              name="userId"
+              placeholder="유저 ID"
+              value={form.userId}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+              required
+            />
+          )}
+
+          <input
+            type="email"
+            name="email"
+            placeholder="이메일"
+            value={form.email}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2"
+            required
+          />
+
+          <input
+            type="password"
+            name="password"
+            placeholder="비밀번호"
+            value={form.password}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2"
+            required
+          />
+
           <button
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl"
-            onClick={onClose}
+            type="submit"
+            className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded"
           >
-            &times;
+            {isLogin ? "로그인" : "회원가입"}
           </button>
+        </form>
 
-          <h2 className="text-xl font-bold">
-            {isSignup ? "회원가입" : "로그인"}
-          </h2>
+        {message && (
+          <p className="mt-4 text-center text-sm text-red-500">{message}</p>
+        )}
 
-          {/* 이메일 로그인/회원가입 */}
-          <div className="flex flex-col gap-y-2 w-full">
-            <label className="text-sm text-gray-800 font-medium">
-              이메일로 {isSignup ? "회원가입" : "로그인"}
-            </label>
-            <div className="flex h-[40px]">
-              <input
-                type="email"
-                placeholder="이메일을 입력하세요."
-                className="w-full px-4 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-              />
-              <button className="bg-green-500 text-white px-4 rounded-r-md hover:bg-green-600 text-sm whitespace-nowrap">
-                {isSignup ? "회원가입" : "로그인"}
+        <div className="mt-6 text-sm text-center">
+          {isLogin ? (
+            <span>
+              계정이 없으신가요?{" "}
+              <button
+                onClick={() => setIsLogin(false)}
+                className="text-green-600 font-semibold hover:underline"
+              >
+                회원가입
               </button>
-            </div>
-          </div>
-
-          {/* 소셜 로그인/회원가입 */}
-          <div className="flex flex-col gap-y-2 w-full">
-            <label className="text-sm text-gray-800 font-medium">
-              소셜 계정으로 {isSignup ? "회원가입" : "로그인"}
-            </label>
-
-            {/* 카카오 */}
-            <button onClick={handleKakaoLogin} className="w-full h-[48px]">
-              <img
-                src={KakaoIcon}
-                alt="카카오 로그인"
-                className="w-full h-full object-contain rounded-md"
-              />
-            </button>
-
-            {/* 구글 */}
-            <button
-              onClick={handleGoogleLogin}
-              className="gsi-material-button w-full h-[48px] rounded-md flex items-center justify-center gap-x-2"
-              aria-label="구글 로그인"
-            >
-              <div className="gsi-material-button-state"></div>
-              <div className="gsi-material-button-content-wrapper flex items-center justify-center gap-2 w-full">
-                <div className="gsi-material-button-icon w-5 h-5">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 48 48"
-                    className="w-full h-full"
-                  >
-                    <path fill="#EA4335" d="..." />
-                    <path fill="#4285F4" d="..." />
-                    <path fill="#FBBC05" d="..." />
-                    <path fill="#34A853" d="..." />
-                    <path fill="none" d="M0 0h48v48H0z" />
-                  </svg>
-                </div>
-                <span className="gsi-material-button-contents whitespace-nowrap text-sm font-medium">
-                  Sign in with Google
-                </span>
-              </div>
-            </button>
-          </div>
-
-          {/* 전환 링크 */}
-          <p className="text-sm text-center text-gray-500 mt-4">
-            {isSignup ? (
-              <>
-                계정이 이미 있으신가요?{" "}
-                <span
-                  onClick={() => setMode("login")}
-                  className="text-green-600 font-semibold hover:underline cursor-pointer"
-                >
-                  로그인
-                </span>
-              </>
-            ) : (
-              <>
-                아직 회원이 아니신가요?{" "}
-                <span
-                  onClick={() => setMode("signup")}
-                  className="text-green-600 font-semibold hover:underline cursor-pointer"
-                >
-                  회원가입
-                </span>
-              </>
-            )}
-          </p>
+            </span>
+          ) : (
+            <span>
+              계정이 이미 있으신가요?{" "}
+              <button
+                onClick={() => setIsLogin(true)}
+                className="text-green-600 font-semibold hover:underline"
+              >
+                로그인
+              </button>
+            </span>
+          )}
         </div>
       </div>
     </div>
