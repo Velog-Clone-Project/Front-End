@@ -16,9 +16,12 @@ import {
   Quote,
   Link as LinkIcon,
   Code,
+  Image as ImageIcon,
 } from "lucide-react";
+import Image from "@tiptap/extension-image";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../libs/api/axios";
 import "../styles/write.css";
 
 function ToolbarButton({ onClick, children, isActive }) {
@@ -48,14 +51,45 @@ export default function Write() {
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Link.configure(),
       CodeBlock.configure(),
+      Image.configure({ inline: false, allowBase64: true }),
     ],
     content: "",
   });
 
-  const handlePublish = () => {
-    const content = editor?.getHTML();
-    console.log("제목:", title);
-    console.log("본문:", content);
+  const handlePublish = async () => {
+    if (!title.trim() || !editor?.getHTML().trim()) {
+      alert("제목과 내용을 모두 입력해주세요.");
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.post(
+        "/posts",
+        {
+          title,
+          content: editor.getHTML(),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            // "x-mock-response-code": "200", // 테스트용, 실제 연결 시 제거
+          },
+        }
+      );
+
+      const postId = res.data?.data?.postId;
+      console.log("응답 데이터:", res.data);
+      console.log("생성된 postId:", postId);
+
+      if (postId) navigate(`/posts/${postId}`);
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 400) alert("요청 형식이 잘못되었습니다.");
+      else if (status === 401) alert("로그인이 필요합니다.");
+      else if (status === 500) alert("서버 오류입니다.");
+      else alert("출간 실패");
+      console.error(err);
+    }
   };
 
   return (
@@ -137,6 +171,53 @@ export default function Write() {
             onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
           >
             <Code size={20} />
+          </ToolbarButton>
+          {/* 이미지 업로드 버튼 */}
+          <ToolbarButton
+            onClick={async () => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = "image/*";
+              input.onchange = async () => {
+                const file = input.files?.[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append("image", file);
+
+                try {
+                  const res = await axiosInstance.post(
+                    "/posts/images",
+                    formData,
+                    {
+                      headers: {
+                        Authorization: `Bearer ${localStorage.getItem(
+                          "accessToken"
+                        )}`,
+                        // "x-mock-response-code": "201", // 테스트용 (필요시 유지)
+                      },
+                    }
+                  );
+
+                  const imageUrl = res.data?.data?.imageUrl;
+                  if (imageUrl) {
+                    editor
+                      ?.chain()
+                      .focus()
+                      .insertContent(`<img src="${imageUrl}" alt="" />`)
+                      .run();
+                  } else {
+                    alert("이미지 URL을 받지 못했습니다.");
+                  }
+                } catch (err) {
+                  console.error("업로드 실패:", err);
+                  alert(err.response?.data?.message || "이미지 업로드 실패");
+                }
+              };
+              input.click();
+            }}
+          >
+            <ImageIcon size={20} />
           </ToolbarButton>
         </div>
 

@@ -19,7 +19,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/write" element={<Write />} />
-        <Route path="/post/:postId" element={<PostDetail />} />
+        <Route path="/posts/:postId" element={<PostDetail />} />
         <Route path="/my-velog" element={<MyVelog />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/search" element={<Search />} />
