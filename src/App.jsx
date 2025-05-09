@@ -5,8 +5,7 @@ import PostDetail from "./pages/PostDetail.jsx";
 import MyVelog from "./pages/MyVelog.jsx";
 import Settings from "./pages/Settings.jsx";
 import Search from "./pages/Search.jsx";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
+
 import Header from "./components/Header.jsx";
 
 function App() {
@@ -23,8 +22,6 @@ function App() {
         <Route path="/my-velog" element={<MyVelog />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
       </Routes>
     </>
   );

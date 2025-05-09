@@ -1,24 +1,35 @@
-// Header.jsx
 import React, { useState, useEffect } from "react";
 import VelogIcon from "../assets/velog-icon.svg";
 import AlertIcon from "../assets/velog-alert.png";
 import SearchIcon from "../assets/velog-search.png";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AuthModal from "./AuthModal";
-import axios from "../libs/api/axios"; // 🔥 axios 인스턴스 import 추가
+import axios from "../libs/api/axios";
 
 function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+
+  // 로그인/회원가입 모달 상태
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  // 모달 모드: "login" 또는 "signup"
   const [authMode, setAuthMode] = useState("login");
+
+  // 로그인 여부
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // 드롭다운 메뉴 표시 여부
   const [showDropdown, setShowDropdown] = useState(false);
 
+  // 처음 렌더링 시 로컬스토리지에서 토큰 확인하여 로그인 상태 설정
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) setIsLoggedIn(true);
   }, []);
 
+  // 로그아웃 요청 및 상태 초기화
   const handleLogout = async () => {
     try {
       await axios.post(
@@ -30,10 +41,8 @@ function Header() {
           },
         }
       );
-      console.log("로그아웃 성공");
     } catch (err) {
       console.error("로그아웃 실패:", err);
-      // 실패해도 클라이언트 상태 초기화
     } finally {
       localStorage.removeItem("accessToken");
       setIsLoggedIn(false);
@@ -43,8 +52,10 @@ function Header() {
 
   return (
     <>
-      <header className="w-full bg-[#F8F9FA]">
+      {/* 헤더 배경색: 홈화면은 연한 회색, 그 외는 흰색 */}
+      <header className={`w-full ${isHome ? "bg-[#F8F9FA]" : "bg-white"}`}>
         <div className="max-w-screen-2xl mx-auto flex justify-between items-center h-16 px-[24px]">
+          {/* 좌측: 로고 */}
           <img
             src={VelogIcon}
             alt="Velog logo"
@@ -52,8 +63,10 @@ function Header() {
             onClick={() => navigate("/")}
           />
 
+          {/* 우측: 로그인 여부에 따라 다른 UI */}
           {isLoggedIn ? (
             <div className="flex items-center space-x-5 relative">
+              {/* 검색, 알림 아이콘 */}
               <img
                 src={SearchIcon}
                 alt="Search"
@@ -61,13 +74,15 @@ function Header() {
               />
               <img src={AlertIcon} alt="Alert" className="h-6 cursor-pointer" />
 
+              {/* 새 글 작성 버튼 */}
               <button
                 onClick={() => navigate("/write")}
-                className="px-4 py-1 rounded-full bg-[#f1f3f5] text-sm font-medium border border-gray-300 hover:bg-gray-200"
+                className="px-4 py-1 rounded-full bg-[#ffffff] text-sm font-medium border border-gray-300 hover:bg-gray-200"
               >
                 새 글 작성
               </button>
 
+              {/* 프로필 버튼 */}
               <div
                 className="flex items-center gap-1 cursor-pointer"
                 onClick={() => setShowDropdown(!showDropdown)}
@@ -76,12 +91,25 @@ function Header() {
                 <span className="text-sm">▼</span>
               </div>
 
+              {/* 드롭다운 메뉴 */}
               {showDropdown && (
                 <ul className="absolute top-12 right-0 bg-white shadow-lg rounded border w-40 text-sm z-50">
-                  <li className="hover:bg-gray-100 px-4 py-2 cursor-pointer">
+                  <li
+                    className="hover:bg-gray-100 px-4 py-2 cursor-pointer"
+                    onClick={() => {
+                      navigate("/my-velog");
+                      setShowDropdown(false);
+                    }}
+                  >
                     내 벨로그
                   </li>
-                  <li className="hover:bg-gray-100 px-4 py-2 cursor-pointer">
+                  <li
+                    className="hover:bg-gray-100 px-4 py-2 cursor-pointer"
+                    onClick={() => {
+                      navigate("/settings");
+                      setShowDropdown(false);
+                    }}
+                  >
                     설정
                   </li>
                   <li
@@ -95,12 +123,15 @@ function Header() {
             </div>
           ) : (
             <div className="flex items-center space-x-5">
+              {/* 검색, 알림 아이콘 */}
               <img
                 src={SearchIcon}
                 alt="Search"
                 className="h-6 cursor-pointer"
               />
               <img src={AlertIcon} alt="Alert" className="h-6 cursor-pointer" />
+
+              {/* 로그인 버튼 */}
               <button
                 onClick={() => {
                   setAuthMode("login");
@@ -115,6 +146,7 @@ function Header() {
         </div>
       </header>
 
+      {/* 로그인/회원가입 모달 */}
       {isAuthOpen && (
         <AuthModal
           mode={authMode}

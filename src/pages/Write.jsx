@@ -1,3 +1,4 @@
+// 필요한 라이브러리 및 에디터 확장들 import
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extension-placeholder";
@@ -5,6 +6,7 @@ import Heading from "@tiptap/extension-heading";
 import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
 import CodeBlock from "@tiptap/extension-code-block";
+import Image from "@tiptap/extension-image";
 import {
   Bold,
   Italic,
@@ -18,12 +20,12 @@ import {
   Code,
   Image as ImageIcon,
 } from "lucide-react";
-import Image from "@tiptap/extension-image";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../libs/api/axios";
 import "../styles/write.css";
 
+// 툴바 버튼 컴포넌트 (재사용 가능)
 function ToolbarButton({ onClick, children, isActive }) {
   return (
     <button
@@ -39,14 +41,13 @@ function ToolbarButton({ onClick, children, isActive }) {
 
 export default function Write() {
   const navigate = useNavigate();
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(""); // 제목 상태
 
+  // 에디터 초기화
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Placeholder.configure({
-        placeholder: "당신의 이야기를 적어보세요...",
-      }),
+      Placeholder.configure({ placeholder: "당신의 이야기를 적어보세요..." }),
       Heading.configure({ levels: [1, 2, 3, 4] }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Link.configure(),
@@ -56,6 +57,7 @@ export default function Write() {
     content: "",
   });
 
+  // 글 출간 처리 함수
   const handlePublish = async () => {
     if (!title.trim() || !editor?.getHTML().trim()) {
       alert("제목과 내용을 모두 입력해주세요.");
@@ -72,29 +74,23 @@ export default function Write() {
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            // "x-mock-response-code": "200", // 테스트용, 실제 연결 시 제거
           },
         }
       );
-
       const postId = res.data?.data?.postId;
-      console.log("응답 데이터:", res.data);
-      console.log("생성된 postId:", postId);
-
-      if (postId) navigate(`/posts/${postId}`);
+      if (postId) navigate(`/posts/${postId}`); // 작성 완료 시 상세 페이지로 이동
     } catch (err) {
       const status = err.response?.status;
       if (status === 400) alert("요청 형식이 잘못되었습니다.");
       else if (status === 401) alert("로그인이 필요합니다.");
       else if (status === 500) alert("서버 오류입니다.");
       else alert("출간 실패");
-      console.error(err);
     }
   };
 
   return (
     <div className="h-screen flex">
-      {/* 왼쪽 에디터 영역 */}
+      {/* 왼쪽 영역: 제목, 툴바, 본문 작성 */}
       <div className="flex-1 flex flex-col overflow-y-auto">
         {/* 제목 입력창 */}
         <div className="p-6 bg-white">
@@ -109,6 +105,7 @@ export default function Write() {
 
         {/* 툴바 */}
         <div className="sticky top-0 bg-white z-30 shadow-sm border-b p-4 flex items-center gap-2">
+          {/* 제목 스타일 토글 */}
           <ToolbarButton
             onClick={() =>
               editor?.chain().focus().toggleHeading({ level: 1 }).run()
@@ -137,7 +134,11 @@ export default function Write() {
           >
             <Heading4 size={20} />
           </ToolbarButton>
+
+          {/* 구분선 */}
           <div className="w-px h-6 bg-gray-300 mx-2" />
+
+          {/* 텍스트 스타일 토글 */}
           <ToolbarButton
             onClick={() => editor?.chain().focus().toggleBold().run()}
           >
@@ -153,6 +154,8 @@ export default function Write() {
           >
             <List size={20} />
           </ToolbarButton>
+
+          {/* 인용/링크/코드 */}
           <div className="w-px h-6 bg-gray-300 mx-2" />
           <ToolbarButton
             onClick={() => editor?.chain().focus().toggleBlockquote().run()}
@@ -172,7 +175,8 @@ export default function Write() {
           >
             <Code size={20} />
           </ToolbarButton>
-          {/* 이미지 업로드 버튼 */}
+
+          {/* 이미지 업로드 */}
           <ToolbarButton
             onClick={async () => {
               const input = document.createElement("input");
@@ -181,7 +185,6 @@ export default function Write() {
               input.onchange = async () => {
                 const file = input.files?.[0];
                 if (!file) return;
-
                 const formData = new FormData();
                 formData.append("image", file);
 
@@ -194,7 +197,6 @@ export default function Write() {
                         Authorization: `Bearer ${localStorage.getItem(
                           "accessToken"
                         )}`,
-                        // "x-mock-response-code": "201", // 테스트용 (필요시 유지)
                       },
                     }
                   );
@@ -210,7 +212,6 @@ export default function Write() {
                     alert("이미지 URL을 받지 못했습니다.");
                   }
                 } catch (err) {
-                  console.error("업로드 실패:", err);
                   alert(err.response?.data?.message || "이미지 업로드 실패");
                 }
               };
@@ -221,7 +222,7 @@ export default function Write() {
           </ToolbarButton>
         </div>
 
-        {/* 본문 에디터 */}
+        {/* 본문 작성 영역 */}
         <div className="flex-1 p-6">
           <EditorContent
             editor={editor}
@@ -229,7 +230,7 @@ export default function Write() {
           />
         </div>
 
-        {/* 하단 버튼 고정 */}
+        {/* 하단 고정 버튼 */}
         <div className="sticky bottom-0 bg-white z-20 p-4 border-t flex justify-between items-center">
           <button
             onClick={() => navigate("/")}
@@ -237,18 +238,16 @@ export default function Write() {
           >
             ← 나가기
           </button>
-          <div className="flex gap-2">
-            <button
-              onClick={handlePublish}
-              className="px-6 py-2 rounded bg-green-500 hover:bg-green-600 text-white font-semibold text-sm"
-            >
-              출간하기
-            </button>
-          </div>
+          <button
+            onClick={handlePublish}
+            className="px-6 py-2 rounded bg-green-500 hover:bg-green-600 text-white font-semibold text-sm"
+          >
+            출간하기
+          </button>
         </div>
       </div>
 
-      {/* 오른쪽 미리보기 영역 */}
+      {/* 오른쪽 실시간 미리보기 */}
       <div className="w-[50%] bg-[#F8F9FA] p-12 overflow-y-auto">
         {title && <h1 className="text-3xl font-bold mb-6">{title}</h1>}
         <div

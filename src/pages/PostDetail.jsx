@@ -56,8 +56,8 @@ export default function PostDetail() {
         </div>
 
         {/* 좋아요/공유 버튼 */}
-        <div className="relative mb-20">
-          <div className="absolute -left-20 top-0 flex flex-col items-center rounded-full p-2 bg-[#f8f9fa] border">
+        <div className="relative mb-20 ">
+          <div className="absolute -left-20 top-0 flex flex-col items-center rounded-full p-2 bg-[#f8f9fa] border ">
             <button
               onClick={handleLike}
               className={`w-10 h-10 flex items-center justify-center rounded-full ${
@@ -80,14 +80,14 @@ export default function PostDetail() {
           </div>
 
           <div
-            className="prose prose-lg"
+            className="prose prose-lg min-h-[400px] mb-20"
             dangerouslySetInnerHTML={{
               __html: post.content.replace(/<hr\s*\/?>/gi, ""),
             }}
           />
         </div>
 
-        <div className="flex items-center gap-4 border-y py-6 mb-20">
+        <div className="flex items-center gap-4 py-6 mb-20">
           <img
             src={post.authorProfileImageUrl}
             className="w-16 h-16 rounded-full"
