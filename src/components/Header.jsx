@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import AuthModal from "./AuthModal";
 import axios from "../libs/api/axios";
 
-function Header() {
+function Header({ user, isLoggedIn, setUser, setIsLoggedIn }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === "/";
@@ -17,17 +17,8 @@ function Header() {
   // 모달 모드: "login" 또는 "signup"
   const [authMode, setAuthMode] = useState("login");
 
-  // 로그인 여부
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   // 드롭다운 메뉴 표시 여부
   const [showDropdown, setShowDropdown] = useState(false);
-
-  // 처음 렌더링 시 로컬스토리지에서 토큰 확인하여 로그인 상태 설정
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (token) setIsLoggedIn(true);
-  }, []);
 
   // 로그아웃 요청 및 상태 초기화
   const handleLogout = async () => {
@@ -39,6 +30,7 @@ function Header() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
+          withCredentials: true,
         }
       );
     } catch (err) {
@@ -46,6 +38,7 @@ function Header() {
     } finally {
       localStorage.removeItem("accessToken");
       setIsLoggedIn(false);
+      setUser(null); // ✅ 유저 정보 초기화
       setShowDropdown(false);
     }
   };

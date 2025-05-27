@@ -5,6 +5,7 @@ export default function Settings() {
   const [profile, setProfile] = useState(null);
   const [email, setEmail] = useState("");
   const [theme, setTheme] = useState("light");
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -41,7 +42,7 @@ export default function Settings() {
         </div>
 
         {/* 구분선 */}
-        <div className="w-px h-60 bg-gray-100 p" />
+        <div className="w-px h-60 bg-gray-100" />
 
         {/* 오른쪽 - 텍스트 */}
         <div>
@@ -53,43 +54,57 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* 나머지 설정 (기능 O) */}
-      <div className="mt-12">
-        {/* 이메일 변경 */}
-        <div className="mb-10">
-          <h3 className="text-sm font-semibold mb-1">이메일 주소</h3>
-          <div className="flex gap-2">
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일"
-              className="border px-3 py-2 rounded w-full"
-            />
-            <button className="bg-green-500 text-white px-4 rounded">
-              변경
-            </button>
-          </div>
+      {/* 아래 설정들 */}
+      <div className="space-y-10">
+        {/* 이메일 주소 */}
+        <div>
+          <h3 className="font-bold mb-1">이메일 주소</h3>
+          {isEditingEmail ? (
+            <div className="flex gap-2">
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="이메일"
+                className="border px-3 py-2 rounded w-full"
+              />
+              <button className="bg-green-500 text-white px-4 rounded">
+                변경
+              </button>
+            </div>
+          ) : (
+            <div className="flex justify-between items-center border-b pb-4">
+              <p className="text-sm text-gray-400">
+                회원 인증 또는 시스템에서 발송하는 이메일을 수신하는 주소입니다.
+              </p>
+              <button
+                className="text-green-500 font-semibold text-sm underline"
+                onClick={() => setIsEditingEmail(true)}
+              >
+                변경
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 테마 설정 */}
-        <div className="mb-10">
-          <h3 className="text-sm font-semibold mb-2">테마</h3>
+        <div>
+          <h3 className="font-bold mb-2">테마</h3>
           <div className="flex gap-4">
-            {[
-              { label: "라이트", value: "light" },
-              { label: "다크", value: "dark" },
-              { label: "시스템", value: "system" },
-            ].map((option) => (
+            {["light", "dark", "system"].map((option) => (
               <button
-                key={option.value}
-                onClick={() => setTheme(option.value)}
-                className={`border w-16 h-12 flex items-center justify-center rounded text-sm font-medium transition-colors duration-150 ${
-                  theme === option.value
-                    ? "border-black bg-black text-white"
-                    : "border-gray-300 text-gray-700"
+                key={option}
+                onClick={() => setTheme(option)}
+                className={`px-6 py-3 border rounded font-medium text-sm ${
+                  theme === option
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-black border-gray-300"
                 }`}
               >
-                {option.label}
+                {option === "light"
+                  ? "라이트"
+                  : option === "dark"
+                  ? "다크"
+                  : "시스템"}
               </button>
             ))}
           </div>
@@ -97,7 +112,7 @@ export default function Settings() {
 
         {/* 회원 탈퇴 */}
         <div>
-          <h3 className="text-sm font-semibold mb-2">회원 탈퇴</h3>
+          <h3 className="font-bold mb-2">회원 탈퇴</h3>
           <p className="text-sm text-gray-500 mb-4">
             탈퇴 시 작성하신 포스트 및 댓글이 모두 삭제되며 복구되지 않습니다.
           </p>
