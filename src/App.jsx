@@ -18,30 +18,31 @@ function App() {
   const isWritePage = location.pathname === "/write";
 
   const [user, setUser] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // 로그인 후 유저 정보 가져오기
-  const fetchUser = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
+  // 초기값을 localStorage 기준으로 설정하면 초기 렌더링 깔끔하게 가능
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    () => !!localStorage.getItem("accessToken")
+  );
 
-      const res = await axios.get("/auth/user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setUser(res.data.data);
-      setIsLoggedIn(true);
-    } catch (err) {
-      console.error("유저 정보 불러오기 실패:", err);
-      setUser(null);
-      setIsLoggedIn(false);
-    }
-  };
-
+  // accessToken이 있을 경우 유저 정보 요청
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        // Authorization 헤더는 axios 인터셉터로 자동 처리됨
+        const res = await axios.get("/auth/user");
+
+        setUser(res.data.data);
+        setIsLoggedIn(true);
+      } catch (err) {
+        console.error("유저 정보 불러오기 실패:", err);
+        setUser(null);
+        setIsLoggedIn(false);
+      }
+    };
+
     fetchUser();
   }, []);
 

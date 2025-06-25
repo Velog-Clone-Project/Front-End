@@ -5,55 +5,52 @@ import axios from "../libs/api/axios";
 export default function SocialSignup() {
   const navigate = useNavigate();
 
-  // 입력 받을 필드 상태 (userId, profileName, introduction만 수정 가능)
+  // 입력 필드: 수정 가능한 정보
   const [form, setForm] = useState({
     userId: "",
     profileName: "",
-    introduction: "",
+    bio: "", // 명세에 따라 bio로 사용
   });
 
-  // 쿠키로 받은 값 (수정 불가능)
+  // 쿠키 기반의 불변 필드
   const [email, setEmail] = useState("");
-  const [serviceType, setServiceType] = useState("");
+  const [userType, setUserType] = useState("");
   const [message, setMessage] = useState("");
 
-  // ✅ 1. 쿠키에서 회원가입용 정보 불러오기
+  // 쿠키에서 이메일 / 유저 타입 / 초기값 불러오기
   useEffect(() => {
     const cookieObj = Object.fromEntries(
       document.cookie.split("; ").map((v) => v.split("="))
     );
 
-    // 이메일, 서비스 타입은 수정 불가 (숨겨진 필드로 사용)
     setEmail(decodeURIComponent(cookieObj.email || ""));
-    setServiceType(cookieObj.serviceType || "");
+    setUserType(cookieObj.userType || "");
 
-    // userId, profileName, introduction은 초기값만 설정, 수정 가능
     setForm((prev) => ({
       ...prev,
       userId: decodeURIComponent(cookieObj.userId || ""),
       profileName: decodeURIComponent(cookieObj.profileName || ""),
-      introduction: decodeURIComponent(cookieObj.introduction || ""),
+      bio: decodeURIComponent(cookieObj.bio || ""),
     }));
   }, []);
 
-  // 인풋 값 변경 핸들러
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ 2. 소셜 회원가입 요청
+  // 소셜 회원가입 요청 (POST /auth/signup/social)
   const handleSignup = async (e) => {
     e.preventDefault();
     setMessage("");
 
     try {
-      // POST /auth/signup/oauth2/kakao 또는 /google
-      await axios.post(`/auth/signup/oauth2/${serviceType}`, {
-        email, // 수정 불가
+      await axios.post("/auth/signup/social", {
+        email,
         userId: form.userId,
         profileName: form.profileName,
-        introduction: form.introduction,
+        bio: form.bio,
+        userType, // 명세 필수 필드
       });
 
       setMessage("회원가입 성공! 홈으로 이동합니다.");
@@ -62,11 +59,10 @@ export default function SocialSignup() {
       const status = err.response?.status;
       const msg = err.response?.data?.message;
 
-      // 에러 메시지 처리
       if (status === 400) setMessage("모든 필드를 입력해주세요.");
-      else if (status === 409 && msg?.includes("EMAIL"))
+      else if (status === 409 && msg?.includes("Email"))
         setMessage("이미 등록된 이메일입니다.");
-      else if (status === 409 && msg?.includes("USER_ID"))
+      else if (status === 409 && msg?.includes("User ID"))
         setMessage("이미 사용 중인 유저 ID입니다.");
       else setMessage(msg || "회원가입 실패");
     }
@@ -99,18 +95,17 @@ export default function SocialSignup() {
           className="w-full border border-gray-300 rounded px-3 py-2"
         />
 
-        {/* 한줄 소개 */}
+        {/* 한줄 소개 → bio */}
         <input
           type="text"
-          name="introduction"
+          name="bio"
           placeholder="한줄 소개"
-          value={form.introduction}
+          value={form.bio}
           onChange={handleChange}
           required
           className="w-full border border-gray-300 rounded px-3 py-2"
         />
 
-        {/* 제출 버튼 */}
         <button
           type="submit"
           className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded"
@@ -118,7 +113,6 @@ export default function SocialSignup() {
           회원가입
         </button>
 
-        {/* 에러/성공 메시지 */}
         {message && (
           <p className="text-center text-sm text-red-500 mt-2">{message}</p>
         )}

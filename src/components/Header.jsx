@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import VelogIcon from "../assets/velog-icon.svg";
 import AlertIcon from "../assets/velog-alert.png";
 import SearchIcon from "../assets/velog-search.png";
@@ -11,44 +11,39 @@ function Header({ user, isLoggedIn, setUser, setIsLoggedIn }) {
   const location = useLocation();
   const isHome = location.pathname === "/";
 
-  // 로그인/회원가입 모달 상태
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-
-  // 모달 모드: "login" 또는 "signup"
   const [authMode, setAuthMode] = useState("login");
-
-  // 드롭다운 메뉴 표시 여부
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // 로그아웃 요청 및 상태 초기화
+  // 로그아웃 처리
+  // API 명세 기준: POST /auth/logout + Authorization 헤더 + refreshToken 쿠키
   const handleLogout = async () => {
     try {
       await axios.post(
         "/auth/logout",
         {},
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-          withCredentials: true,
+          // Authorization은 axios 인터셉터로 자동 설정되어 있으면 생략 가능
+          withCredentials: true, // refreshToken은 쿠키로 전송되므로 필수
         }
       );
     } catch (err) {
       console.error("로그아웃 실패:", err);
     } finally {
+      // accessToken 제거 + 상태 초기화
       localStorage.removeItem("accessToken");
       setIsLoggedIn(false);
-      setUser(null); // ✅ 유저 정보 초기화
+      setUser(null);
       setShowDropdown(false);
     }
   };
 
   return (
     <>
-      {/* 헤더 배경색: 홈화면은 연한 회색, 그 외는 흰색 */}
+      {/* 홈일 경우 연한 회색, 그 외 흰색 배경 */}
       <header className={`w-full ${isHome ? "bg-[#F8F9FA]" : "bg-white"}`}>
         <div className="max-w-screen-2xl mx-auto flex justify-between items-center h-16 px-[24px]">
-          {/* 좌측: 로고 */}
+          {/* 왼쪽: 로고 */}
           <img
             src={VelogIcon}
             alt="Velog logo"
@@ -56,10 +51,10 @@ function Header({ user, isLoggedIn, setUser, setIsLoggedIn }) {
             onClick={() => navigate("/")}
           />
 
-          {/* 우측: 로그인 여부에 따라 다른 UI */}
+          {/* 오른쪽: 로그인 여부에 따라 분기 */}
           {isLoggedIn ? (
             <div className="flex items-center space-x-5 relative">
-              {/* 검색, 알림 아이콘 */}
+              {/* 검색 / 알림 아이콘 */}
               <img
                 src={SearchIcon}
                 alt="Search"
@@ -116,7 +111,6 @@ function Header({ user, isLoggedIn, setUser, setIsLoggedIn }) {
             </div>
           ) : (
             <div className="flex items-center space-x-5">
-              {/* 검색, 알림 아이콘 */}
               <img
                 src={SearchIcon}
                 alt="Search"
@@ -124,7 +118,7 @@ function Header({ user, isLoggedIn, setUser, setIsLoggedIn }) {
               />
               <img src={AlertIcon} alt="Alert" className="h-6 cursor-pointer" />
 
-              {/* 로그인 버튼 */}
+              {/* 로그인 버튼 클릭 시 모달 오픈 */}
               <button
                 onClick={() => {
                   setAuthMode("login");
